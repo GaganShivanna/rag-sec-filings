@@ -77,7 +77,7 @@ def load_all_filings(data_dir: str = "data/raw") -> list[Document]:
     """
     Walk the data/raw directory and load all SEC filings.
     SEC Edgar downloader saves files as:
-    data/raw/sec-edgar-filings/{TICKER}/{FILING_TYPE}/{accession}/primary-document.html
+    data/raw/sec-edgar-filings/{TICKER}/{FILING_TYPE}/{accession}/full-submission.txt
     """
     documents = []
     base = Path(data_dir) / "sec-edgar-filings"
@@ -100,8 +100,8 @@ def load_all_filings(data_dir: str = "data/raw") -> list[Document]:
                 if not accession_dir.is_dir():
                     continue
 
-                # Find the main document
-                for candidate in ["primary-document.html", "primary-document.htm", "filing-details.html"]:
+                # Handle both .txt and .html formats
+                for candidate in ["full-submission.txt", "primary-document.html", "primary-document.htm"]:
                     candidate_path = accession_dir / candidate
                     if candidate_path.exists():
                         doc = load_filing(str(candidate_path), ticker, filing_type)

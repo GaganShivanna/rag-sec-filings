@@ -17,3 +17,11 @@ print("HTML cleaning test:")
 print(cleaned)
 print(f"Length: {len(cleaned)} chars")
 print("\n✓ loader.py working correctly")
+
+# Test with real SEC filings
+from src.ingestion.loader import load_all_filings
+
+docs = load_all_filings("data/raw")
+print(f"\nLoaded {len(docs)} filings:")
+for doc in docs:
+    print(f"  {doc.ticker} {doc.filing_type} — {doc.char_count:,} chars")

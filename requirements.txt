@@ -1,0 +1,13 @@
+langchain langchain-community langchain-openai 
+  pinecone-client 
+  chromadb 
+  sentence-transformers 
+  transformers 
+  openai 
+  fastapi uvicorn 
+  python-dotenv 
+  sec-edgar-downloader 
+  beautifulsoup4 lxml 
+  pandas numpy 
+  pytest 
+  jupyter
