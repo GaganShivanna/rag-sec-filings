@@ -20,17 +20,35 @@ class Document:
 
 
 def clean_html(raw_html: str) -> str:
-    """Strip HTML tags from SEC filings — they come as raw HTML."""
+    """Strip HTML tags and XBRL data from SEC filings."""
     soup = BeautifulSoup(raw_html, "lxml")
-    
-    # Remove script and style tags entirely
-    for tag in soup(["script", "style", "table"]):
+
+    # Remove all non-narrative tags
+    for tag in soup(["script", "style", "head",
+                     "ix:header", "ix:hidden",
+                     "xbrli:context", "xbrli:unit",
+                     "xbrli:xbrl", "link:roletype"]):
         tag.decompose()
-    
+
+    # Unwrap inline XBRL tags but keep their text content
+    for tag in soup.find_all(["ix:nonfraction", "ix:nonnumeric", "ix:continuation"]):
+        tag.unwrap()
+
     text = soup.get_text(separator=" ")
-    
-    # Clean up excessive whitespace
-    lines = [line.strip() for line in text.splitlines() if line.strip()]
+
+    # Filter out lines that are pure XBRL artifacts
+    lines = []
+    for line in text.splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        # Skip lines that are mostly XBRL namespace references
+        if "xbrli:" in line or "iso4217:" in line or "us-gaap:" in line:
+            continue
+        if len(line) < 20:
+            continue
+        lines.append(line)
+
     return " ".join(lines)
 
 
@@ -47,7 +65,22 @@ def load_filing(file_path: str, ticker: str, filing_type: str = "10-K") -> Optio
 
         raw = path.read_text(encoding="utf-8", errors="ignore")
 
-        # SEC filings come as HTML — clean them
+        # Find the 10-K narrative section
+        doc_start = raw.upper().find("TYPE>10-K")
+        if doc_start != -1:
+            raw = raw[doc_start:]
+
+        # Cut before exhibits start
+        next_exhibit = raw.upper().find("TYPE>EX-")
+        if next_exhibit != -1:
+            raw = raw[:next_exhibit]
+
+        # Find HTML start
+        html_start = raw.lower().find("<html")
+        if html_start != -1:
+            raw = raw[html_start:]
+
+        # Clean and extract text
         if "<html" in raw.lower() or "<body" in raw.lower():
             content = clean_html(raw)
         else:
