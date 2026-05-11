@@ -71,8 +71,8 @@ def score_claim_against_context(
             max_length=512
         )
 
-        label = result[0]["label"].lower()
-        score = result[0]["score"]
+        label = result["label"].lower()
+        score = result["score"]
 
         # Map to our standard labels
         if label == "entailment":
